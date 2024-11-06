@@ -65,6 +65,9 @@ var _ = Describe("["+strings.ToLower(DesiredMode.String())+"-parallel]", func() 
 
 	Context("Event based tests", func() {
 		BeforeEach(func() {
+			if fullConfig.PtpModeDiscovered == testconfig.TelcoGrandMasterClock {
+				Skip("test not valid for WPC GM config")
+			}
 			if ptphelper.PtpEventEnabled() == 0 {
 				Skip("Skipping, PTP events not enabled")
 			}
@@ -75,13 +78,14 @@ var _ = Describe("["+strings.ToLower(DesiredMode.String())+"-parallel]", func() 
 		})
 
 		It("PTP Slave Clock Sync", func() {
-			if fullConfig.PtpModeDiscovered == testconfig.TelcoGrandMasterClock {
-				Skip("test not valid for WPC GM config")
-			}
+
 			testPtpSlaveClockSync(fullConfig, testParameters) // Implementation of the test case
 
 		})
 		AfterEach(func() {
+			if fullConfig.PtpModeDiscovered == testconfig.TelcoGrandMasterClock {
+				return
+			}
 			// closing internal pubsub
 			if ptphelper.PtpEventEnabled() != 0 {
 				event.PubSub.Close()
@@ -93,6 +97,9 @@ var _ = Describe("["+strings.ToLower(DesiredMode.String())+"-parallel]", func() 
 	// serial tests always run after all parallel tests.
 	Context("Event based tests, v1 regression", Serial, func() {
 		BeforeEach(func() {
+			if fullConfig.PtpModeDiscovered == testconfig.TelcoGrandMasterClock {
+				Skip("test not valid for WPC GM config")
+			}
 			if !event.IsV1EventRegressionNeeded() {
 				Skip("Skipping, test PTP events v1 regression is for 4.16 and 4.17 only")
 			}
@@ -116,16 +123,19 @@ var _ = Describe("["+strings.ToLower(DesiredMode.String())+"-parallel]", func() 
 			if fullConfig.Status == testconfig.DiscoveryFailureStatus {
 				Skip("Failed to find a valid ptp slave configuration")
 			}
-		})
-
-		It("PTP Slave Clock Sync", func() {
 			if fullConfig.PtpModeDiscovered == testconfig.TelcoGrandMasterClock {
 				Skip("test not valid for WPC GM config")
 			}
+		})
+
+		It("PTP Slave Clock Sync", func() {
 			testPtpSlaveClockSync(fullConfig, testParameters) // Implementation of the test case
 
 		})
 		AfterEach(func() {
+			if fullConfig.PtpModeDiscovered == testconfig.TelcoGrandMasterClock {
+				return
+			}
 			// stops the event listening framework
 			DeferCleanup(func() {
 				err := event.DeleteConsumerNamespace()
